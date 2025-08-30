@@ -1,8 +1,9 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, roc_curve, roc_auc_score
 import os
 import numpy as np
+import matplotlib.pyplot as plt
 
 # Importar las funciones de los módulos que creamos en `src/`
 from src.utils import preprocess_data
@@ -82,6 +83,37 @@ if __name__ == "__main__":
             print(classification_report(y_test, y_pred_nn, target_names=label_encoder.classes_))
             print("Matriz de Confusión:\n", confusion_matrix(y_test, y_pred_nn, labels=np.unique(y)))
             
+            # 6. Generar la Curva ROC y el AUC
+            # Obtener las probabilidades de predicción para la clase positiva (DDoS)
+            y_pred_clf_prob = best_clf.predict_proba(X_test)[:, 1]
+            
+            # La Red Neuronal ya nos da las probabilidades en `y_pred_nn_prob`
+            
+            # Calcular la Curva ROC y el AUC
+            fpr_clf, tpr_clf, _ = roc_curve(y_test, y_pred_clf_prob)
+            auc_clf = roc_auc_score(y_test, y_pred_clf_prob)
+
+            fpr_nn, tpr_nn, _ = roc_curve(y_test, y_pred_nn_prob)
+            auc_nn = roc_auc_score(y_test, y_pred_nn_prob)
+            
+            print("\n--- Curva ROC y AUC ---")
+            print(f"AUC del Árbol de Decisión: {auc_clf:.4f}")
+            print(f"AUC de la Red Neuronal: {auc_nn:.4f}")
+
+            # Graficar la Curva ROC
+            plt.figure(figsize=(10, 8))
+            plt.plot(fpr_clf, tpr_clf, label=f'Árbol de Decisión (AUC = {auc_clf:.2f})', color='blue')
+            plt.plot(fpr_nn, tpr_nn, label=f'Red Neuronal (AUC = {auc_nn:.2f})', color='red')
+            plt.plot([0, 1], [0, 1], 'k--', label='Clasificador aleatorio (AUC = 0.50)', color='gray')
+            
+            plt.xlabel('Tasa de Falsos Positivos (FPR)')
+            plt.ylabel('Tasa de Verdaderos Positivos (TPR)')
+            plt.title('Curva ROC de Detección de Ataques DDoS')
+            plt.legend(loc='lower right')
+            plt.grid(True)
+            plt.show()
+
+            # Métricas finales
             accuracy_clf = accuracy_score(y_test, y_pred_clf)
             accuracy_nn = accuracy_score(y_test, y_pred_nn)
             print(f"\nPrecisión del Árbol de Decisión: {accuracy_clf:.4f}")
