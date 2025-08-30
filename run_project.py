@@ -111,7 +111,8 @@ if __name__ == "__main__":
             plt.title('Curva ROC de Detección de Ataques DDoS')
             plt.legend(loc='lower right')
             plt.grid(True)
-            plt.show()
+          #  plt.show()
+            plt.savefig('roc_curve.png')
 
             # Métricas finales
             accuracy_clf = accuracy_score(y_test, y_pred_clf)
