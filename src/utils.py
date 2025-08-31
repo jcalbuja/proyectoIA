@@ -4,7 +4,7 @@ import numpy as np
 
 def preprocess_data(df):
     """
-    Preprocesa los datos, eliminando columnas innecesarias, 
+    Preprocesamos los datos, eliminando columnas innecesarias, 
     manejando valores infinitos y nulos, y codificando la variable objetivo.
     
     Args:
@@ -14,20 +14,20 @@ def preprocess_data(df):
         tuple: Tupla que contiene las características (X), la variable objetivo (y),
                y el codificador de etiquetas.
     """
-    # Eliminar columnas con valores infinitos o que no aportan al modelo
+    # Eliminamos columnas con valores infinitos o que no aportan al modelo
     df.replace([np.inf, -np.inf], np.nan, inplace=True)
     df.dropna(inplace=True)
     
-    # Eliminar la columna 'Flow ID', 'Source IP', 'Source Port', 'Destination IP', 
+    # Eliminamos las columna 'Flow ID', 'Source IP', 'Source Port', 'Destination IP', 
     # 'Timestamp' ya que no son características útiles para la clasificación
     df = df.drop(columns=['Flow ID', ' Source IP', ' Source Port',
                           ' Destination IP', ' Timestamp'], errors='ignore')
 
-    # Separar las características (X) de la variable objetivo (y)
+    # Separamos las características (X) de la variable objetivo (y)
     X = df.drop(columns=[' Label'])
     y = df[' Label']
     
-    # Codificar la variable objetivo 'Label' (BENIGN y DDoS)
+    # Codificamos la variable objetivo 'Label' (BENIGN y DDoS)
     label_encoder = LabelEncoder()
     y = label_encoder.fit_transform(y)
     

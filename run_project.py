@@ -6,14 +6,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from imblearn.over_sampling import RandomOverSampler
 
-# Importar las funciones de los módulos que creamos en `src/`
+# Importamos las funciones de los módulos que creamos en `src/`
 from src.utils import preprocess_data
 from src.model_training import train_decision_tree, train_neural_network
 
 if __name__ == "__main__":
-    print("Iniciando el pipeline de análisis de ciberseguridad...")
+    print("Iniciamos el pipeline de análisis de ciberseguridad...")
     
-    # 1. Cargar el dataset
+    # 1. Cargamos el dataset
     file_path = 'data/Friday-WorkingHours-Afternoon-DDos.pcap_ISCX.csv'
     if not os.path.exists(file_path):
         print(f"Error: No se encontró el archivo en {file_path}. Asegúrate de que el dataset está en la carpeta 'data/'.")
@@ -25,7 +25,7 @@ if __name__ == "__main__":
         X, y, label_encoder = preprocess_data(df)
         print("Preprocesamiento de datos completado.")
 
-        # Dividir los datos en conjuntos de entrenamiento y prueba de manera estratificada
+        # Dividimos los datos en conjuntos de entrenamiento y prueba de manera estratificada
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
         
         # VERIFICACIÓN CRÍTICA: ¿Hay muestras de la clase 'DDoS' en el conjunto de prueba?
@@ -38,7 +38,7 @@ if __name__ == "__main__":
             print("El script se detendrá ahora.")
             print("=======================================================================")
         else:
-            # Balancear el conjunto de entrenamiento usando RandomOverSampler
+            # Balanceamos el conjunto de entrenamiento usando RandomOverSampler
             print("Balanceando el conjunto de entrenamiento con RandomOverSampler...")
             oversampler = RandomOverSampler(random_state=42)
             X_train_resampled, y_train_resampled = oversampler.fit_resample(X_train, y_train)
@@ -69,12 +69,12 @@ if __name__ == "__main__":
             print(classification_report(y_test, y_pred_nn, target_names=label_encoder.classes_))
             print("Matriz de Confusión:\n", confusion_matrix(y_test, y_pred_nn, labels=np.unique(y)))
             
-            # 6. Generar la Curva ROC y el AUC
-            # Obtener las probabilidades de predicción para la clase positiva (DDoS)
+            # 6. Generamos la Curva ROC y el AUC
+            # Obtenemos las probabilidades de predicción para la clase positiva (DDoS)
             y_pred_clf_prob = best_clf.predict_proba(X_test)[:, 1]
             y_pred_nn_prob = model_nn.predict(X_test_scaled, verbose=0)
             
-            # Calcular la Curva ROC y el AUC
+            # Calculamos la Curva ROC y el AUC
             fpr_clf, tpr_clf, _ = roc_curve(y_test, y_pred_clf_prob)
             auc_clf = roc_auc_score(y_test, y_pred_clf_prob)
 
@@ -85,7 +85,7 @@ if __name__ == "__main__":
             print(f"AUC del Árbol de Decisión: {auc_clf:.4f}")
             print(f"AUC de la Red Neuronal: {auc_nn:.4f}")
 
-            # Graficar la Curva ROC y guardarla
+            # Graficamos la Curva ROC y guardarla
             plt.figure(figsize=(10, 8))
             plt.plot(fpr_clf, tpr_clf, label=f'Árbol de Decisión (AUC = {auc_clf:.2f})', color='blue')
             plt.plot(fpr_nn, tpr_nn, label=f'Red Neuronal (AUC = {auc_nn:.2f})', color='red')
@@ -98,11 +98,11 @@ if __name__ == "__main__":
             plt.grid(True)
             plt.savefig('roc_curve.png')
 
-            # 7. Graficar las curvas de aprendizaje de la Red Neuronal
+            # 7. Graficamos las curvas de aprendizaje de la Red Neuronal
             print("\n--- Curvas de Aprendizaje de la Red Neuronal ---")
             plt.figure(figsize=(12, 6))
 
-            # Curva de Precisión
+            # Gráfica Curva de Precisión
             plt.subplot(1, 2, 1)
             plt.plot(history_nn['accuracy'], label='Precisión de Entrenamiento')
             plt.title('Precisión del Modelo')
@@ -110,7 +110,7 @@ if __name__ == "__main__":
             plt.xlabel('Época')
             plt.legend()
 
-            # Curva de Pérdida (Loss)
+            # Gráfica Curva de Pérdida (Loss)
             plt.subplot(1, 2, 2)
             plt.plot(history_nn['loss'], label='Pérdida de Entrenamiento')
             plt.title('Pérdida del Modelo')
@@ -121,7 +121,7 @@ if __name__ == "__main__":
             plt.tight_layout()
             plt.savefig('learning_curve.png')
             
-            # Métricas finales
+            # Métricas finales entre ambos modelos
             accuracy_clf = accuracy_score(y_test, y_pred_clf)
             accuracy_nn = accuracy_score(y_test, y_pred_nn)
             print(f"\nPrecisión del Árbol de Decisión: {accuracy_clf:.4f}")

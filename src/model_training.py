@@ -17,18 +17,18 @@ def train_decision_tree(X_train, y_train):
     """
     print("Iniciando la búsqueda aleatoria de hiperparámetros para el Árbol de Decisión...")
     
-    # Define la distribución de los parámetros para la búsqueda aleatoria
+    # Definimos la distribución de los parámetros para la búsqueda aleatoria
     param_dist = {
         'max_depth': [3, 5, 7, 10, None], 
         'min_samples_split': [2, 5, 10, 20]
     }
     
-    # Crea el objeto de búsqueda aleatoria
+    # Creamos el objeto de búsqueda aleatoria
     # n_iter controla el número de combinaciones a probar
     random_search = RandomizedSearchCV(
         DecisionTreeClassifier(random_state=42), 
         param_distributions=param_dist, 
-        n_iter=10,  # Probar 10 combinaciones aleatorias
+        n_iter=10,  # Probamos con 10 combinaciones aleatorias
         cv=5, 
         random_state=42
     )
@@ -40,7 +40,7 @@ def train_decision_tree(X_train, y_train):
 
 def train_neural_network(X_train, y_train, X_test):
     """
-    Entrena un modelo de Red Neuronal.
+    Entrenamineto del modelo de Red Neuronal.
     
     Args:
         X_train (np.array): Conjunto de entrenamiento de características.
