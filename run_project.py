@@ -4,6 +4,7 @@ from sklearn.metrics import classification_report, confusion_matrix, accuracy_sc
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from imblearn.over_sampling import RandomOverSampler
 
 # Importar las funciones de los módulos que creamos en `src/`
 from src.utils import preprocess_data
@@ -23,53 +24,38 @@ if __name__ == "__main__":
         # 2. Preprocesamiento de datos
         X, y, label_encoder = preprocess_data(df)
         print("Preprocesamiento de datos completado.")
-        
-        # Separar los datos por clase para una división manual y segura
-        X_ddos = X[y == 1]
-        y_ddos = y[y == 1]
 
-        # VERIFICACIÓN CRÍTICA: ¿Hay muestras de la clase 'DDoS'?
-        if len(X_ddos) == 0:
+        # Dividir los datos en conjuntos de entrenamiento y prueba de manera estratificada
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+        
+        # VERIFICACIÓN CRÍTICA: ¿Hay muestras de la clase 'DDoS' en el conjunto de prueba?
+        if len(np.unique(y_test)) < 2:
             print("\n")
             print("=======================================================================")
-            print("¡ERROR DE DATOS! No se encontraron muestras de la clase 'DDoS' en el dataset.")
+            print("¡ERROR DE DATOS! El conjunto de prueba no contiene ambas clases.")
             print("No es posible entrenar o evaluar un modelo para detectar ataques.")
             print("Por favor, revisa que el archivo CSV contenga ambas clases (BENIGN y DDoS).")
             print("El script se detendrá ahora.")
             print("=======================================================================")
         else:
-            # Continuar con el pipeline solo si hay datos para ambas clases
-            X_benign = X[y == 0]
-            y_benign = y[y == 0]
-            
-            # Tomar 25 muestras de ambas clases para el conjunto de prueba
-            test_size_per_class = min(25, len(X_ddos))
-            
-            X_test_ddos, X_train_ddos, y_test_ddos, y_train_ddos = train_test_split(
-                X_ddos, y_ddos, test_size=test_size_per_class, random_state=42
-            )
+            # Balancear el conjunto de entrenamiento usando RandomOverSampler
+            print("Balanceando el conjunto de entrenamiento con RandomOverSampler...")
+            oversampler = RandomOverSampler(random_state=42)
+            X_train_resampled, y_train_resampled = oversampler.fit_resample(X_train, y_train)
 
-            X_test_benign, X_train_benign, y_test_benign, y_train_benign = train_test_split(
-                X_benign, y_benign, test_size=test_size_per_class, random_state=42
-            )
-            
-            # Unir los conjuntos de entrenamiento y prueba usando np.concatenate
-            X_train = np.concatenate([X_train_benign, X_train_ddos], axis=0)
-            y_train = np.concatenate([y_train_benign, y_train_ddos], axis=0)
-            X_test = np.concatenate([X_test_benign, X_test_ddos], axis=0)
-            y_test = np.concatenate([y_test_benign, y_test_ddos], axis=0)
-            
-            print("Datos divididos en conjuntos de entrenamiento y prueba de forma manual y segura.")
+            print(f"Tamaño original del conjunto de entrenamiento: {len(X_train)}")
+            print(f"Tamaño balanceado del conjunto de entrenamiento: {len(X_train_resampled)}")
+            print("Datos divididos y balanceados exitosamente.")
             
             # 3. Entrenamiento del Modelo Superficial (Árbol de Decisión)
             print("\nEntrenando Árbol de Decisión...")
-            best_clf = train_decision_tree(X_train, y_train)
+            best_clf = train_decision_tree(X_train_resampled, y_train_resampled)
             y_pred_clf = best_clf.predict(X_test)
             print("Árbol de Decisión entrenado y evaluado.")
             
             # 4. Entrenamiento del Modelo Profundo (Red Neuronal)
             print("\nEntrenando Red Neuronal...")
-            model_nn, X_test_scaled = train_neural_network(X_train, y_train, X_test)
+            model_nn, X_test_scaled = train_neural_network(X_train_resampled, y_train_resampled, X_test)
             y_pred_nn_prob = model_nn.predict(X_test_scaled, verbose=0)
             y_pred_nn = (y_pred_nn_prob > 0.5).astype("int32")
             print("Red Neuracional entrenada y evaluada.")
@@ -86,8 +72,7 @@ if __name__ == "__main__":
             # 6. Generar la Curva ROC y el AUC
             # Obtener las probabilidades de predicción para la clase positiva (DDoS)
             y_pred_clf_prob = best_clf.predict_proba(X_test)[:, 1]
-            
-            # La Red Neuronal ya nos da las probabilidades en `y_pred_nn_prob`
+            y_pred_nn_prob = model_nn.predict(X_test_scaled, verbose=0)
             
             # Calcular la Curva ROC y el AUC
             fpr_clf, tpr_clf, _ = roc_curve(y_test, y_pred_clf_prob)
@@ -100,7 +85,7 @@ if __name__ == "__main__":
             print(f"AUC del Árbol de Decisión: {auc_clf:.4f}")
             print(f"AUC de la Red Neuronal: {auc_nn:.4f}")
 
-            # Graficar la Curva ROC
+            # Graficar la Curva ROC y guardarla
             plt.figure(figsize=(10, 8))
             plt.plot(fpr_clf, tpr_clf, label=f'Árbol de Decisión (AUC = {auc_clf:.2f})', color='blue')
             plt.plot(fpr_nn, tpr_nn, label=f'Red Neuronal (AUC = {auc_nn:.2f})', color='red')
@@ -111,7 +96,6 @@ if __name__ == "__main__":
             plt.title('Curva ROC de Detección de Ataques DDoS')
             plt.legend(loc='lower right')
             plt.grid(True)
-          #  plt.show()
             plt.savefig('roc_curve.png')
 
             # Métricas finales
