@@ -55,7 +55,7 @@ if __name__ == "__main__":
             
             # 4. Entrenamiento del Modelo Profundo (Red Neuronal)
             print("\nEntrenando Red Neuronal...")
-            model_nn, X_test_scaled = train_neural_network(X_train_resampled, y_train_resampled, X_test)
+            model_nn, X_test_scaled, history_nn = train_neural_network(X_train_resampled, y_train_resampled, X_test)
             y_pred_nn_prob = model_nn.predict(X_test_scaled, verbose=0)
             y_pred_nn = (y_pred_nn_prob > 0.5).astype("int32")
             print("Red Neuracional entrenada y evaluada.")
@@ -98,6 +98,29 @@ if __name__ == "__main__":
             plt.grid(True)
             plt.savefig('roc_curve.png')
 
+            # 7. Graficar las curvas de aprendizaje de la Red Neuronal
+            print("\n--- Curvas de Aprendizaje de la Red Neuronal ---")
+            plt.figure(figsize=(12, 6))
+
+            # Curva de Precisión
+            plt.subplot(1, 2, 1)
+            plt.plot(history_nn['accuracy'], label='Precisión de Entrenamiento')
+            plt.title('Precisión del Modelo')
+            plt.ylabel('Precisión')
+            plt.xlabel('Época')
+            plt.legend()
+
+            # Curva de Pérdida (Loss)
+            plt.subplot(1, 2, 2)
+            plt.plot(history_nn['loss'], label='Pérdida de Entrenamiento')
+            plt.title('Pérdida del Modelo')
+            plt.ylabel('Pérdida')
+            plt.xlabel('Época')
+            plt.legend()
+
+            plt.tight_layout()
+            plt.savefig('learning_curve.png')
+            
             # Métricas finales
             accuracy_clf = accuracy_score(y_test, y_pred_clf)
             accuracy_nn = accuracy_score(y_test, y_pred_nn)
